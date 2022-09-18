@@ -1,6 +1,7 @@
-# React Router Example
+# Component Testing examples
 
-To run this example:
+This is a monorepo with multiple examples of component testing with multiple Test tools:
 
-- `npm install`
-- `npm run dev`
+- [Cypress](./examples/cypress/README.md)
+- [Playwright](./examples/playwright/README.md)
+- [Testing Library](./examples/testing-library/README.md)
