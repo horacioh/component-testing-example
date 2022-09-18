@@ -1,17 +1,18 @@
+import { QueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { Form, useLoaderData, redirect, useNavigate } from "react-router-dom";
 
 import { updateContact } from "../contacts";
 
-export const action =
-  (queryClient) =>
-  async ({ request, params }) => {
+export function action(queryClient: QueryClient) {
+  return async function innerEditAction({ request, params }) {
     const formData = await request.formData();
     const updates = Object.fromEntries(formData);
     await updateContact(params.contactId, updates);
     queryClient.invalidateQueries(["contacts"]);
     return redirect(`/contacts/${params.contactId}`);
   };
+}
 
 export default function Edit() {
   const contact = useLoaderData();

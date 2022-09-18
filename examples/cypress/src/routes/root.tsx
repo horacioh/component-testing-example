@@ -10,16 +10,15 @@ import {
 import { useDebounce } from "rooks";
 
 import { createContact, getContacts } from "../contacts";
-import { useQuery, useIsFetching } from "@tanstack/react-query";
+import { useQuery, useIsFetching, QueryClient } from "@tanstack/react-query";
 
 const contactListQuery = (q) => ({
   queryKey: ["contacts", "list", q ?? "all"],
   queryFn: () => getContacts(q),
 });
 
-export const loader =
-  (queryClient) =>
-  async ({ request }) => {
+export function loader(queryClient: QueryClient) {
+  return async function innerLoader({ request }) {
     const url = new URL(request.url);
     const q = url.searchParams.get("q");
     if (!queryClient.getQueryData(contactListQuery(q).queryKey)) {
@@ -27,12 +26,15 @@ export const loader =
     }
     return { q };
   };
+}
 
-export const action = (queryClient) => async () => {
-  const contact = await createContact();
-  queryClient.invalidateQueries(["contacts", "list"]);
-  return contact;
-};
+export function action(queryClient: QueryClient) {
+  return async function innerRootAction() {
+    const contact = await createContact();
+    queryClient.invalidateQueries(["contacts", "list"]);
+    return contact;
+  };
+}
 
 export default function Root() {
   const { q } = useLoaderData();
@@ -42,6 +44,8 @@ export default function Root() {
   const submit = useSubmit();
 
   const debouncedSubmit = useDebounce(submit, 500);
+
+  if (!contacts) return null;
 
   return (
     <>

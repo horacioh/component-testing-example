@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Form, useFetcher, useParams } from "react-router-dom";
-import { getContact, updateContact } from "../contacts";
-import { useQuery } from "@tanstack/react-query";
+import { Contact as ContactType, getContact, updateContact } from "../contacts";
+import { QueryClient, useQuery } from "@tanstack/react-query";
 
-const contactDetailQuery = (id) => ({
+const contactDetailQuery = (id: string) => ({
   queryKey: ["contacts", "detail", id],
   queryFn: async () => {
     const contact = await getContact(id);
@@ -17,18 +17,30 @@ const contactDetailQuery = (id) => ({
   },
 });
 
-export const loader =
-  (queryClient) =>
-  async ({ params }) => {
+type InnerLoaderProps = {
+  params: any;
+};
+
+export function loader(queryClient: QueryClient) {
+  return async function innerContactLoader({ params }: InnerLoaderProps) {
     const query = contactDetailQuery(params.contactId);
     return (
-      queryClient.getQueryData(query) ?? (await queryClient.fetchQuery(query))
+      queryClient.getQueryData<ContactType>(query.queryKey) ??
+      (await queryClient.fetchQuery(query))
     );
   };
+}
 
-export const action =
-  (queryClient) =>
-  async ({ request, params }) => {
+type InnerActionParams = {
+  request: any;
+  params: any;
+};
+
+export function action(queryClient: QueryClient) {
+  return async function innerContactAction({
+    request,
+    params,
+  }: InnerActionParams) {
     let formData = await request.formData();
     const contact = await updateContact(params.contactId, {
       favorite: formData.get("favorite") === "true",
@@ -36,15 +48,20 @@ export const action =
     await queryClient.invalidateQueries(["contacts"]);
     return contact;
   };
+}
 
 export default function Contact() {
   const params = useParams();
+  console.log("params:", params);
+
   const { data: contact } = useQuery(contactDetailQuery(params.contactId));
+
+  if (!contact) return null;
 
   return (
     <div id="contact">
       <div>
-        <img key={contact.avatar} src={contact.avatar || null} />
+        <img key={contact.avatar} src={contact.avatar} />
       </div>
 
       <div>
@@ -91,7 +108,7 @@ export default function Contact() {
   );
 }
 
-function Favorite({ contact }) {
+function Favorite({ contact }: { contact: ContactType }) {
   const fetcher = useFetcher();
   let favorite = contact.favorite;
   if (fetcher.formData) {

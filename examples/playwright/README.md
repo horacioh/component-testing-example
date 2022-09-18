@@ -1,1 +1,0 @@
-# Component Testing example: Playwright
